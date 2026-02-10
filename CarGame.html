@@ -1,33 +1,28 @@
 <!doctype html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <title>Phaser - CarGame</title>
-    <script type="text/javascript" src="js/phaser.min.js"></script>
+    <script type="text/javascript" src="phaser.min.js"></script>
     <style type="text/css">
-        body {
-            margin: 0;
-        }
+        body { margin: 0; background-color: #333; }
+        canvas { display: block; margin: 0 auto; }
     </style>
 </head>
-
 <body>
     <section style="width: 100%; height:100%; display:flex; flex-direction: column; align-items: center ; justify-content: center;">
-        <h1 style="text-align: center">Phaser - Car Game</h1>
-        <div id="phaser-game" style="display:block;padding-top: 40px">
-
-        </div>
+        <h1 style="text-align: center; color: white; font-family: sans-serif;">Phaser - Car Game</h1>
+        <div id="phaser-game" style="display:block;padding-top: 40px"></div>
     </section>
     <script type="text/javascript">
-
         var game = new Phaser.Game(800, 600, Phaser.AUTO, 'phaser-game', { preload: preload, create: create, update: update, render: render });
 
         function preload() {
-            game.load.image('road', 'assets/road.png');
-            game.load.image('car', 'assets/car.png');
-            game.load.image('oil', 'assets/barrel.png');
-            game.load.image('block', 'assets/block.png');
+            // ĐÃ SỬA: Xóa bỏ 'assets/' vì các file ảnh của bạn nằm ở ngoài
+            game.load.image('road', 'road.png');
+            game.load.image('car', 'car.png');
+            game.load.image('oil', 'barrel.png');
+            game.load.image('block', 'block.png');
         }
         var car;
         var road;
@@ -36,11 +31,7 @@
         var tileCounter = 1;
         var oilGroup;
         var blockGroup;
-        var timer;
-        var flag = true;
         var firingTimer = 0;
-        var pos;
-        var num;
         var score = 0;
         var labelScore;
         var noOil = false;
@@ -52,36 +43,30 @@
                 if (oil != null) {
                     oil.reset(x, y);
                     oil.body.velocity.y = 600;
-                }
-                else {
+                } else {
                     noOil = true;
                     addBlock(x, y);
                 }
             }
         }
         function addBlock(x, y) {
-            if (!noOil) {
+            if (!noBlock) {
                 var block = blockGroup.getFirstExists(false);
                 if (block != null) {
                     block.reset(x, y);
                     block.body.velocity.y = 600;
-                }
-                else {
+                } else {
                     noBlock = true;
                     addOil(x, y);
                 }
             }
         }
         function addObj() {
-            pos = Math.floor(Math.random() * 3) + 1;
-            num = Math.floor(Math.random() * 2) + 1;
-            if (noOil && noBlock) {
-                game.pause();
-            }
+            var pos = Math.floor(Math.random() * 3) + 1;
+            var num = Math.floor(Math.random() * 2) + 1;
             if (num == 1) {
-                addOil(85 + 132 * pos, -100)
-            }
-            else {
+                addOil(85 + 132 * pos, -100);
+            } else {
                 addBlock(68 + 132 * pos, 0);
             }
             firingTimer = game.time.now + 2000;
@@ -90,67 +75,45 @@
             game.physics.startSystem(Phaser.Physics.ARCADE);
             road = game.add.tileSprite(200, 0, 400, 600, 'road');
             car = game.add.sprite(335, 305, 'car');
-            labelScore = game.add.text(20, 20, "0", { font: "30px Arial", fill: "#ffffff" });
+            labelScore = game.add.text(20, 20, "Score: 0", { font: "30px Arial", fill: "#ffffff" });
             game.physics.enable(car, Phaser.Physics.ARCADE);
-            game.physics.enable(road, Phaser.Physics.ARCADE);
             oilGroup = game.add.group();
             oilGroup.enableBody = true;
-            oilGroup.physicsBodyType = Phaser.Physics.ARCADE;
             oilGroup.createMultiple(30, 'oil');
             oilGroup.setAll('outOfBoundsKill', true);
             oilGroup.setAll('checkWorldBounds', true);
-
             blockGroup = game.add.group();
             blockGroup.enableBody = true;
-            blockGroup.physicsBodyType = Phaser.Physics.ARCADE;
             blockGroup.createMultiple(30, 'block');
             blockGroup.setAll('outOfBoundsKill', true);
             blockGroup.setAll('checkWorldBounds', true);
-
             cursors = game.input.keyboard.createCursorKeys();
         }
         function incrementScore(car, oil) {
-            score = score + 10;
-            labelScore.text = score;
+            score += 10;
+            labelScore.text = "Score: " + score;
             oil.kill();
         }
         function decrementScore(car, block) {
-            score = score - 10;
-            labelScore.text = score;
+            score -= 10;
+            labelScore.text = "Score: " + score;
             block.kill();
         }
-
         function update() {
-
             game.physics.arcade.overlap(car, oilGroup, incrementScore, null, this);
             game.physics.arcade.overlap(car, blockGroup, decrementScore, null, this);
-
             road.tilePosition.y += 10;
-            distance = tileCounter * 600 + road.tilePosition.y;
-            if (road.tilePosition.y == 600) {
-                tileCounter = tileCounter + 1;
-            }
-            car.body.velocity.setTo(0, 0);
-            if (cursors.left.isDown) {
-                if (car.x > 212) {
-                    car.body.velocity.x = -500;
-                }
-            }
-            else if (cursors.right.isDown) {
-                if (car.x < 475) {
-                    car.body.velocity.x = 500;
-                }
+            car.body.velocity.x = 0;
+            if (cursors.left.isDown && car.x > 212) {
+                car.body.velocity.x = -500;
+            } else if (cursors.right.isDown && car.x < 475) {
+                car.body.velocity.x = 500;
             }
             if (game.time.now > firingTimer) {
                 addObj();
             }
         }
-        function render() {
-            // game.debug.text(" Distance::"+distance+" tilecounter::"+tilecounter+' Debugging Phaser::'+road.tilePosition.y, 20, 20, 'yellow', 'Segoe UI');
-        }
-
+        function render() {}
     </script>
-
 </body>
-
 </html>
