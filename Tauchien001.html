@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chiến Hạm 001 - Gametoiden</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #0a192f; color: white; text-align: center; margin: 0; padding: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(10, 8vw); grid-template-rows: repeat(10, 8vw); gap: 1px; background: #172a45; border: 2px solid #64ffda; margin: 10px auto; width: 80vw; max-width: 350px; }
+        .grid div { background: #0a192f; border: 1px solid #112240; box-sizing: border-box; }
+        .ship { background: #64ffda !important; }
+        .hit { background: #f57d7d !important; position: relative; }
+        .hit::after { content: '💥'; position: absolute; left: 0; font-size: 12px; width: 100%; }
+        .miss { background: #303c55 !important; position: relative; }
+        .miss::after { content: '💧'; position: absolute; left: 0; font-size: 12px; width: 100%; }
+        .btn { padding: 12px 24px; background: #64ffda; color: #0a192f; border: none; border-radius: 5px; font-weight: bold; margin: 10px; cursor: pointer; }
+        .status { color: #ccd6f6; margin: 15px; font-size: 1.1rem; min-height: 1.5em; }
+    </style>
+</head>
+<body>
+    <h2>🚀 CHIẾN HẠM 001</h2>
+    <div class="status" id="info">Đang quét radar...</div>
+    
+    <div id="game-container">
+        <p>BẢN ĐỒ ĐỊCH (Chạm để bắn)</p>
+        <div class="grid" id="computer-grid"></div>
+        
+        <p>BẢN ĐỒ CỦA BẠN</p>
+        <div class="grid" id="user-grid"></div>
+    </div>
+
+    <button class="btn" onclick="location.reload()">CHƠI LẠI</button>
+
+    <script>
+        const userGrid = document.getElementById('user-grid');
+        const computerGrid = document.getElementById('computer-grid');
+        const info = document.getElementById('info');
+        const userSquares = [];
+        const computerSquares = [];
+        const enemyShips = [];
+        let gameOver = false;
+
+        // Tạo bàn cờ
+        for (let i = 0; i < 100; i++) {
+            const uSquare = document.createElement('div');
+            userGrid.appendChild(uSquare);
+            userSquares.push(uSquare);
+
+            const cSquare = document.createElement('div');
+            cSquare.dataset.id = i;
+            cSquare.onclick = () => playerShoot(i);
+            computerGrid.appendChild(cSquare);
+            computerSquares.push(cSquare);
+        }
+
+        // Máy đặt tàu ngẫu nhiên (đơn giản hóa)
+        while(enemyShips.length < 15) {
+            let r = Math.floor(Math.random() * 100);
+            if(!enemyShips.includes(r)) enemyShips.push(r);
+        }
+
+        // Đặt tàu cho người chơi (ngẫu nhiên)
+        const myShips = [11,12,13, 33,43,53, 77,78, 90,91,92,93];
+        myShips.forEach(s => userSquares[s].classList.add('ship'));
+
+        info.innerText = "Radar đã sẵn sàng! Bắn tàu địch ngay!";
+
+        function playerShoot(i) {
+            if(gameOver || computerSquares[i].classList.contains('hit') || computerSquares[i].classList.contains('miss')) return;
+
+            if(enemyShips.includes(i)) {
+                computerSquares[i].classList.add('hit');
+                info.innerText = "💥 TRÚNG RỒI! Tuyệt lắm!";
+                checkWin();
+            } else {
+                computerSquares[i].classList.add('miss');
+                info.innerText = "💧 Hụt rồi! Chờ địch phản công...";
+                setTimeout(computerShoot, 600);
+            }
+        }
+
+        function computerShoot() {
+            if(gameOver) return;
+            let r = Math.floor(Math.random() * 100);
+            if(userSquares[r].classList.contains('hit') || userSquares[r].classList.contains('miss')) return computerShoot();
+
+            if(myShips.includes(r)) {
+                userSquares[r].classList.add('hit');
+                info.innerText = "⚠️ ĐỊCH BẮN TRÚNG TÀU BẠN!";
+            } else {
+                userSquares[r].classList.add('miss');
+                info.innerText = "😅 Máy bắn hụt! Đến lượt bạn.";
+            }
+        }
+
+        function checkWin() {
+            const hits = document.querySelectorAll('#computer-grid .hit').length;
+            if(hits === enemyShips.length) {
+                info.innerText = "🏆 CHÚC MỪNG! BẠN ĐÃ THẮNG!";
+                gameOver = true;
+            }
+        }
+    </script>
+</body>
+</html>
