@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chiến Hạm 001</title>
+    <style>
+        body { font-family: sans-serif; background: #001f3f; color: white; text-align: center; margin: 0; padding: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(10, 8vw); gap: 1px; justify-content: center; margin: 10px auto; max-width: 350px; }
+        .grid div { width: 8vw; height: 8vw; max-width: 30px; max-height: 30px; background: #0074D9; border: 1px solid #001f3f; }
+        .hit { background: #FF4136 !important; }
+        .miss { background: #AAAAAA !important; }
+        .btn { padding: 12px 20px; background: orange; border: none; font-weight: bold; border-radius: 5px; margin: 10px; }
+        #info { color: #FFDC00; font-weight: bold; margin: 10px; height: 1.5em; }
+    </style>
+</head>
+<body>
+    <h3>🚢 CHIẾN HẠM 001</h3>
+    <div id="info">Chạm vào ô để bắn tàu địch!</div>
+    <div class="grid" id="board"></div>
+    <button class="btn" onclick="location.reload()">CHƠI LẠI</button>
+
+    <script>
+        const board = document.getElementById('board');
+        const info = document.getElementById('info');
+        const ships = [];
+        let hits = 0;
+
+        // Tạo 10 vị trí tàu ngẫu nhiên
+        while(ships.length < 10) {
+            let r = Math.floor(Math.random() * 100);
+            if(!ships.includes(r)) ships.push(r);
+        }
+
+        for (let i = 0; i < 100; i++) {
+            const square = document.createElement('div');
+            square.onclick = function() {
+                if (this.classList.contains('hit') || this.classList.contains('miss')) return;
+                if (ships.includes(i)) {
+                    this.classList.add('hit');
+                    hits++;
+                    info.innerText = "🔥 TRÚNG RỒI! (" + hits + "/10)";
+                    if (hits === 10) info.innerText = "🏆 BẠN THẮNG RỒI!";
+                } else {
+                    this.classList.add('miss');
+                    info.innerText = "🌊 Hụt rồi!";
+                }
+            };
+            board.appendChild(square);
+        }
+    </script>
+</body>
+</html>
