@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Candy Crush Gametoiden</title>
+    <style>
+        body { background: #2c3e50; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: white; font-family: sans-serif; }
+        .grid { display: flex; flex-wrap: wrap; width: 320px; height: 320px; background: #34495e; border: 5px solid #2c3e50; border-radius: 8px; }
+        .grid div { width: 40px; height: 40px; border: 1px solid #2c3e50; box-sizing: border-box; cursor: pointer; border-radius: 4px; }
+        .red { background: #ff4d4d; } .blue { background: #0099ff; } .green { background: #2ecc71; }
+        .yellow { background: #f1c40f; } .purple { background: #9b59b6; } .orange { background: #e67e22; }
+    </style>
+</head>
+<body>
+    <div>
+        <h2 style="text-align:center">Score: <span id="score">0</span></h2>
+        <div class="grid"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.querySelector('.grid');
+            const scoreDisplay = document.getElementById('score');
+            const width = 8; const squares = []; let score = 0;
+            const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+            function createBoard() {
+                for (let i = 0; i < width * width; i++) {
+                    const square = document.createElement('div');
+                    square.setAttribute('draggable', true);
+                    square.setAttribute('id', i);
+                    square.classList.add(colors[Math.floor(Math.random() * colors.length)]);
+                    grid.appendChild(square);
+                    squares.push(square);
+                }
+            }
+            createBoard();
+        });
+    </script>
+</body>
+</html>
