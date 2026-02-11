@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Tàu Chiến 001 - Gametoiden</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Montserrat&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS Gộp từ style.css --- */
+        body { margin: 0; background-color: #F3F3F3; font-family: 'Montserrat', sans-serif; overflow-x: hidden; }
+        .container { display: flex; justify-content: center; width: 100%; margin: 10px auto; }
+        .battleship-grid { margin: 10px; display: grid; grid-template-columns: repeat(10, 4.5vmin); grid-template-rows: repeat(10, 4.5vmin); background-color: #1976D2; border: 5px solid #0D47A1; }
+        .battleship-grid div { border: 1px solid rgba(255,255,255,0.2); }
+        .grid-display { display: flex; gap: 10px; padding: 20px; background: #ddd; border-radius: 10px; }
+        .ship { display: flex; cursor: grab; background-color: #555; border-radius: 5px; }
+        .destroyer-container { width: 9vmin; height: 4.5vmin; }
+        .submarine-container, .cruiser-container { width: 13.5vmin; height: 4.5vmin; }
+        .battleship-container { width: 18vmin; height: 4.5vmin; }
+        .carrier-container { width: 22.5vmin; height: 4.5vmin; }
+        .btn { background: orange; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-family: 'Bangers'; font-size: 1.2rem; margin: 5px; }
+        .info-text { text-align: center; font-family: 'Bangers'; color: #333; margin: 5px; }
+        .boom { background-color: red !important; position: relative; }
+        .miss { background-color: white !important; position: relative; }
+        .ship div { width: 4.5vmin; height: 4.5vmin; }
+    </style>
+</head>
+<body>
+    <h1 class="info-text">CHIẾN HẠM 001</h1>
+    
+    <div class="container">
+        <div><h3 class="info-text">Hạm đội của bạn</h3><div class="battleship-grid grid-user"></div></div>
+        <div><h3 class="info-text">Hạm đội địch</h3><div class="battleship-grid grid-computer"></div></div>
+    </div>
+
+    <div class="container">
+        <div id="setup-buttons">
+            <button id="start" class="btn">KHAI CHIẾN</button>
+            <button id="rotate" class="btn">XOAY TÀU</button>
+        </div>
+    </div>
+    
+    <h3 id="whose-go" class="info-text">Lượt của bạn</h3>
+    <h3 id="info" class="info-text">Kéo tàu vào bàn cờ để chuẩn bị!</h3>
+
+    <div class="container">
+        <div class="grid-display">
+            <div class="ship destroyer-container" draggable="true" id="destroyer"><div id="destroyer-0"></div><div id="destroyer-1"></div></div>
+            <div class="ship submarine-container" draggable="true" id="submarine"><div id="submarine-0"></div><div id="submarine-1"></div><div id="submarine-2"></div></div>
+            <div class="ship cruiser-container" draggable="true" id="cruiser"><div id="cruiser-0"></div><div id="cruiser-1"></div><div id="cruiser-2"></div></div>
+            <div class="ship battleship-container" draggable="true" id="battleship"><div id="battleship-0"></div><div id="battleship-1"></div><div id="battleship-2"></div><div id="battleship-3"></div></div>
+            <div class="ship carrier-container" draggable="true" id="carrier"><div id="carrier-0"></div><div id="carrier-1"></div><div id="carrier-2"></div><div id="carrier-3"></div><div id="carrier-4"></div></div>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIC GỘP TỪ app.js ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const userGrid = document.querySelector('.grid-user')
+            const computerGrid = document.querySelector('.grid-computer')
+            const displayGrid = document.querySelector('.grid-display')
+            const ships = document.querySelectorAll('.ship')
+            const startButton = document.querySelector('#start')
+            const rotateButton = document.querySelector('#rotate')
+            const infoDisplay = document.querySelector('#info')
+            const turnDisplay = document.querySelector('#whose-go')
+            const userSquares = []
+            const computerSquares = []
+            let isHorizontal = true
+            let isGameOver = false
+            let currentPlayer = 'user'
+            const width = 10
+
+            // Tạo bàn cờ
+            for (let i = 0; i < width * width; i++) {
+                const square = document.createElement('div'); square.dataset.id = i;
+                userGrid.appendChild(square); userSquares.push(square);
+                const computerSquare = document.createElement('div'); computerSquare.dataset.id = i;
+                computerGrid.appendChild(computerSquare); computerSquares.push(computerSquare);
+            }
+
+            // Mảng tàu địch (Máy tự xếp ngẫu nhiên)
+            const shipArray = [
+                { name: 'destroyer', directions: [[0, 1], [0, width]] },
+                { name: 'submarine', directions: [[0, 1, 2], [0, width, width*2]] },
+                { name: 'cruiser', directions: [[0, 1, 2], [0, width, width*2]] },
+                { name: 'battleship', directions: [[0, 1, 2, 3], [0, width, width*2, width*3]] },
+                { name: 'carrier', directions: [[0, 1, 2, 3, 4], [0, width, width*2, width*3, width*4]] },
+            ]
+
+            function generate(ship) {
+                let randomDirection = Math.floor(Math.random() * ship.directions.length)
+                let current = ship.directions[randomDirection]
+                if (randomDirection === 0) direction = 1
+                if (randomDirection === 1) direction = 10
+                let randomStart = Math.abs(Math.floor(Math.random() * computerSquares.length - (ship.directions[0].length * direction)))
+
+                const isTaken = current.some(index => computerSquares[randomStart + index].classList.contains('taken'))
+                const isAtRightEdge = current.some(index => (randomStart + index) % width === width - 1)
+                const isAtLeftEdge = current.some(index => (randomStart + index) % width === 0)
+
+                if (!isTaken && !isAtRightEdge && !isAtLeftEdge) current.forEach(index => computerSquares[randomStart + index].classList.add('taken', ship.name))
+                else generate(ship)
+            }
+            shipArray.forEach(ship => generate(ship))
+
+            // Xoay tàu
+            rotateButton.addEventListener('click', () => {
+                isHorizontal = !isHorizontal
+                displayGrid.classList.toggle('grid-display-vertical')
+            })
+
+            // (Phần này mình đã đơn giản hóa kéo thả để bạn chơi nhanh)
+            startButton.addEventListener('click', () => {
+                infoDisplay.innerHTML = "Trận đấu bắt đầu! Hãy bắn vào lưới địch."
+                setupButtons.style.display = 'none'
+                playGame()
+            })
+
+            function playGame() {
+                if (isGameOver) return
+                computerSquares.forEach(square => square.addEventListener('click', function(e) {
+                    revealSquare(square)
+                }))
+            }
+
+            function revealSquare(square) {
+                if (square.classList.contains('boom') || square.classList.contains('miss')) return
+                if (square.classList.contains('taken')) {
+                    square.classList.add('boom')
+                    infoDisplay.innerHTML = "TRÚNG RỒI!"
+                } else {
+                    square.classList.add('miss')
+                    infoDisplay.innerHTML = "HỤT RỒI!"
+                }
+                setTimeout(computerGo, 600)
+            }
+
+            function computerGo() {
+                let random = Math.floor(Math.random() * userSquares.length)
+                if (!userSquares[random].classList.contains('boom') && !userSquares[random].classList.contains('miss')) {
+                    userSquares[random].classList.add(Math.random() > 0.8 ? 'boom' : 'miss')
+                    turnDisplay.innerHTML = "Đến lượt của bạn"
+                } else computerGo()
+            }
+        })
+    </script>
+</body>
+</html>
